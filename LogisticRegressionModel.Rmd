@@ -395,7 +395,107 @@ ggplot(test_processed, aes(x = predicted_prob, fill = factor(is_high_risk))) +
   )
 ```
 
-# 6. Conclusion
+# 6. Model Validity Analysis
+
+## 6.1 Class Distribution and Baseline Accuracy
+
+```{r validity-check}
+cat("\n=== CLASS DISTRIBUTION ANALYSIS ===\n")
+
+# Training set distribution
+train_high_risk_pct <- mean(train_processed$is_high_risk) * 100
+cat(sprintf("\nTraining Set:\n"))
+cat(sprintf("  High Risk: %d (%.2f%%)\n",
+            sum(train_processed$is_high_risk),
+            train_high_risk_pct))
+cat(sprintf("  Low Risk: %d (%.2f%%)\n",
+            sum(train_processed$is_high_risk == 0),
+            100 - train_high_risk_pct))
+
+# Testing set distribution
+test_high_risk_pct <- mean(test_processed$is_high_risk) * 100
+cat(sprintf("\nTesting Set:\n"))
+cat(sprintf("  High Risk: %d (%.2f%%)\n",
+            sum(test_processed$is_high_risk),
+            test_high_risk_pct))
+cat(sprintf("  Low Risk: %d (%.2f%%)\n",
+            sum(test_processed$is_high_risk == 0),
+            100 - test_high_risk_pct))
+
+# Baseline accuracy (always predict majority class)
+baseline_accuracy <- max(test_high_risk_pct, 100 - test_high_risk_pct)
+cat(sprintf("\n=== BASELINE COMPARISON ===\n"))
+cat(sprintf("Baseline Accuracy (always predict majority): %.2f%%\n", baseline_accuracy))
+cat(sprintf("Model Accuracy: %.2f%%\n", accuracy * 100))
+cat(sprintf("Improvement over baseline: %.2f%%\n", accuracy * 100 - baseline_accuracy))
+
+# Check for severe class imbalance
+if (test_high_risk_pct < 5 || test_high_risk_pct > 95) {
+  cat("\n⚠️  WARNING: Severe class imbalance detected!\n")
+  cat("High accuracy may be misleading. Focus on Precision, Recall, and AUC.\n")
+}
+
+cat("\n=== FEATURE LEAKAGE CONCERN ===\n")
+cat("NOTE: The target variable (TTC < 4) is derived from predictors (Actual_Gap, Relative_Speed).\n")
+cat("This creates feature leakage, which may inflate accuracy.\n")
+cat("The model is essentially learning a threshold on TTC = Actual_Gap / Relative_Speed.\n")
+```
+
+## 6.2 Prediction Distribution
+
+```{r prediction-analysis}
+cat("\n=== PREDICTION DISTRIBUTION ===\n")
+
+# How many predictions in each class
+pred_high_risk_pct <- mean(test_predictions) * 100
+cat(sprintf("\nModel Predictions on Test Set:\n"))
+cat(sprintf("  Predicted High Risk: %d (%.2f%%)\n",
+            sum(test_predictions),
+            pred_high_risk_pct))
+cat(sprintf("  Predicted Low Risk: %d (%.2f%%)\n",
+            sum(test_predictions == 0),
+            100 - pred_high_risk_pct))
+
+# Compare with actual distribution
+cat(sprintf("\nActual Distribution:\n"))
+cat(sprintf("  Actual High Risk: %d (%.2f%%)\n",
+            sum(test_processed$is_high_risk),
+            test_high_risk_pct))
+
+# Check if model is just predicting majority class
+if (abs(pred_high_risk_pct - (100 - baseline_accuracy)) < 1) {
+  cat("\n⚠️  WARNING: Model appears to predict majority class almost exclusively!\n")
+}
+```
+
+## 6.3 Recommendations for Robust Evaluation
+
+```{r recommendations}
+cat("\n=== RECOMMENDATIONS ===\n")
+cat("1. Test on Different Time Periods:\n")
+cat("   - Use data from different times of day (e.g., afternoon, evening)\n")
+cat("   - Use data from different days or different highway segments\n\n")
+
+cat("2. Address Feature Leakage:\n")
+cat("   - Consider removing Actual_Gap or Relative_Speed from predictors\n")
+cat("   - Use only raw features: v_Vel, v_Acc, Space_Hdwy\n")
+cat("   - This would make the task more challenging but more realistic\n\n")
+
+cat("3. Focus on Meaningful Metrics:\n")
+cat("   - With imbalanced classes, Precision and Recall are more informative\n")
+cat("   - AUC measures ranking ability regardless of threshold\n")
+cat("   - Consider using F1-score for balanced evaluation\n\n")
+
+cat("4. Cross-Validation:\n")
+cat("   - Use k-fold cross-validation instead of single train/test split\n")
+cat("   - This provides more robust performance estimates\n\n")
+
+cat("5. Alternative Target Definition:\n")
+cat("   - Instead of binary classification, predict actual TTC values (regression)\n")
+cat("   - Use different risk thresholds (e.g., TTC < 2s, TTC < 3s)\n")
+```
+
+# 7. Conclusion
 
 ```{r conclusion}
 cat("\n=== MODEL PERFORMANCE SUMMARY ===\n")
