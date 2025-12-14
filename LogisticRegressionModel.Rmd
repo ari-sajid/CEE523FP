@@ -177,7 +177,7 @@ cat("Low risk cases:", sum(train_processed$is_high_risk == 0), "\n")
 ## 3.2 Testing Data Feature Engineering
 
 ```{r test-feature-engineering}
-cat("Engineering features for testing data...\n")
+cat("Engineering features for testing data\n")
 
 # Self-join to get current features
 test_features <- test_data %>%
@@ -261,7 +261,7 @@ summary(test_processed %>% select(v_Vel, v_Acc, Space_Hdwy, Relative_Speed, TTC_
 # 4. Modeling
 
 ```{r model-training}
-cat("\nTraining logistic regression model...\n")
+cat("\nTraining logistic regression model\n")
 
 # Model with all features including TTC_current
 model_full <- glm(
