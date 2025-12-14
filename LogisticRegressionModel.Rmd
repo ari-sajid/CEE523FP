@@ -48,16 +48,16 @@ train_data <- read_csv(
     Frame_ID = col_double(),
     v_Vel = col_double(),
     v_Acc = col_double(),
-    Space_Headway = col_double(),
-    Preceding = col_double(),
-    v_length = col_double(),
+    Space_Hdwy = col_double(),
+    Preceeding = col_double(),
+    v_Length = col_double(),
     Lane_ID = col_double()
   )
 )
 
 # Filter out rows with no preceding vehicle
 train_data <- train_data %>%
-  filter(Preceding != 0)
+  filter(Preceeding != 0)
 
 cat("Training data loaded:", nrow(train_data), "rows\n")
 
@@ -70,16 +70,16 @@ test_data <- read_csv(
     Frame_ID = col_double(),
     v_Vel = col_double(),
     v_Acc = col_double(),
-    Space_Headway = col_double(),
-    Preceding = col_double(),
-    v_length = col_double(),
+    Space_Hdwy = col_double(),
+    Preceeding = col_double(),
+    v_Length = col_double(),
     Lane_ID = col_double()
   )
 )
 
 # Filter out rows with no preceding vehicle
 test_data <- test_data %>%
-  filter(Preceding != 0)
+  filter(Preceeding != 0)
 
 cat("Testing data loaded:", nrow(test_data), "rows\n")
 ```
@@ -98,9 +98,9 @@ train_processed <- train_data %>%
     Vehicle_ID_Subject = Vehicle_ID,
     v_Vel_Subject = v_Vel,
     v_Acc_Subject = v_Acc,
-    v_length_Subject = v_length,
-    Space_Headway_Subject = Space_Headway,
-    Preceding_ID = Preceding
+    v_Length_Subject = v_Length,
+    Space_Hdwy_Subject = Space_Hdwy,
+    Preceeding_ID = Preceeding
   ) %>%
   # Join with lead vehicle data
   inner_join(
@@ -109,14 +109,14 @@ train_processed <- train_data %>%
         Vehicle_ID,
         Frame_ID,
         v_Vel,
-        v_length
+        v_Length
       ) %>%
       rename(
-        Preceding_ID = Vehicle_ID,
+        Preceeding_ID = Vehicle_ID,
         v_Vel_Lead = v_Vel,
-        v_length_Lead = v_length
+        v_Length_Lead = v_Length
       ),
-    by = c("Preceding_ID", "Frame_ID")
+    by = c("Preceeding_ID", "Frame_ID")
   ) %>%
   # Calculate derived features
   mutate(
@@ -124,7 +124,7 @@ train_processed <- train_data %>%
     Relative_Speed = v_Vel_Subject - v_Vel_Lead,
 
     # Actual Gap (bumper-to-bumper distance)
-    Actual_Gap = Space_Headway_Subject - (v_length_Subject / 2) - (v_length_Lead / 2),
+    Actual_Gap = Space_Hdwy_Subject - (v_Length_Subject / 2) - (v_Length_Lead / 2),
 
     # Time-To-Collision
     TTC = Actual_Gap / Relative_Speed,
@@ -171,9 +171,9 @@ test_processed <- test_data %>%
     Vehicle_ID_Subject = Vehicle_ID,
     v_Vel_Subject = v_Vel,
     v_Acc_Subject = v_Acc,
-    v_length_Subject = v_length,
-    Space_Headway_Subject = Space_Headway,
-    Preceding_ID = Preceding
+    v_Length_Subject = v_Length,
+    Space_Hdwy_Subject = Space_Hdwy,
+    Preceeding_ID = Preceeding
   ) %>%
   # Join with lead vehicle data
   inner_join(
@@ -182,14 +182,14 @@ test_processed <- test_data %>%
         Vehicle_ID,
         Frame_ID,
         v_Vel,
-        v_length
+        v_Length
       ) %>%
       rename(
-        Preceding_ID = Vehicle_ID,
+        Preceeding_ID = Vehicle_ID,
         v_Vel_Lead = v_Vel,
-        v_length_Lead = v_length
+        v_Length_Lead = v_Length
       ),
-    by = c("Preceding_ID", "Frame_ID")
+    by = c("Preceeding_ID", "Frame_ID")
   ) %>%
   # Calculate derived features
   mutate(
@@ -197,7 +197,7 @@ test_processed <- test_data %>%
     Relative_Speed = v_Vel_Subject - v_Vel_Lead,
 
     # Actual Gap (bumper-to-bumper distance)
-    Actual_Gap = Space_Headway_Subject - (v_length_Subject / 2) - (v_length_Lead / 2),
+    Actual_Gap = Space_Hdwy_Subject - (v_Length_Subject / 2) - (v_Length_Lead / 2),
 
     # Time-To-Collision
     TTC = Actual_Gap / Relative_Speed,
