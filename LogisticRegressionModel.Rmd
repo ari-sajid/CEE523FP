@@ -695,7 +695,7 @@ for (delta_t in horizons) {
     Accuracy = cm_h$overall["Accuracy"],
     Precision = cm_h$byClass["Precision"],
     Recall = cm_h$byClass["Sensitivity"],
-    AUC = auc_h
+    AUC = as.numeric(auc_h)
   )
 }
 
@@ -827,7 +827,7 @@ rolling_comparison <- data.frame(
   Accuracy = c(cm_baseline$overall["Accuracy"], cm_enhanced$overall["Accuracy"]),
   Precision = c(cm_baseline$byClass["Precision"], cm_enhanced$byClass["Precision"]),
   Recall = c(cm_baseline$byClass["Sensitivity"], cm_enhanced$byClass["Sensitivity"]),
-  AUC = c(auc_baseline, auc_enhanced)
+  AUC = c(as.numeric(auc_baseline), as.numeric(auc_enhanced))
 )
 
 cat("\n=== BASELINE VS ENHANCED MODEL ===\n")
