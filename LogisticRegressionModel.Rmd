@@ -34,9 +34,24 @@ set.seed(123)
 # 2. Data Loading
 
 ```{r data-loading}
+# Check if zip file exists
+if (!file.exists("TrajectoryData.zip")) {
+  stop("TrajectoryData.zip not found in the project directory!")
+}
+
 # Unzip the data if not already extracted
 if (!dir.exists("TrajectoryData")) {
-  unzip("TrajectoryData.zip")
+  cat("Extracting TrajectoryData.zip...\n")
+  unzip("TrajectoryData.zip", exdir = ".")
+  cat("Extraction complete!\n")
+}
+
+# Verify data files exist
+if (!file.exists("TrajectoryData/0750am-0805am.csv")) {
+  stop("Training data file not found after extraction!")
+}
+if (!file.exists("TrajectoryData/0820am-0835am.csv")) {
+  stop("Testing data file not found after extraction!")
 }
 
 # Load Training Data with only required columns
