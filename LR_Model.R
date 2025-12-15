@@ -1,12 +1,8 @@
-# ==============================================================================
 # Logistic Regression Model for Vehicle Risk Assessment
 # Author: Ariyan Sajid
 # Description: Predicts future high-risk driving events using NGSIM trajectory data
-# ==============================================================================
 
-# ------------------------------------------------------------------------------
 # 1. Setup & Libraries
-# ------------------------------------------------------------------------------
 library(dplyr)
 library(readr)
 library(caret)
@@ -16,9 +12,7 @@ library(tidyr)
 
 set.seed(123)
 
-# ------------------------------------------------------------------------------
 # 2. Data Loading
-# ------------------------------------------------------------------------------
 # Check and extract trajectory data
 if (!file.exists("TrajectoryData.zip")) {
   stop("TrajectoryData.zip not found in the project directory!")
@@ -68,9 +62,7 @@ test_data <- read_csv(
 test_data <- test_data %>% filter(Preceeding != 0)
 cat("Testing data loaded:", nrow(test_data), "rows\n")
 
-# ------------------------------------------------------------------------------
 # 3. Feature Engineering - Training Data
-# ------------------------------------------------------------------------------
 cat("Engineering features for training data\n")
 
 # Constants
@@ -145,9 +137,7 @@ cat("Training data after feature engineering:", nrow(train_processed), "rows\n")
 cat("High risk cases:", sum(train_processed$is_high_risk), "\n")
 cat("Low risk cases:", sum(train_processed$is_high_risk == 0), "\n")
 
-# ------------------------------------------------------------------------------
 # 4. Feature Engineering - Testing Data
-# ------------------------------------------------------------------------------
 cat("Engineering features for testing data\n")
 
 # Self-join for test data
@@ -217,13 +207,11 @@ cat("Testing data after feature engineering:", nrow(test_processed), "rows\n")
 cat("High risk cases:", sum(test_processed$is_high_risk), "\n")
 cat("Low risk cases:", sum(test_processed$is_high_risk == 0), "\n")
 
-# ------------------------------------------------------------------------------
 # 5. Exploratory Data Analysis
-# ------------------------------------------------------------------------------
-cat("\n=== TRAINING DATA SUMMARY ===\n")
+cat("\nTraining Data Summary\n")
 print(summary(train_processed %>% select(v_Vel, v_Acc, Space_Hdwy, Relative_Speed, TTC_current)))
 
-cat("\n=== TESTING DATA SUMMARY ===\n")
+cat("\nTesting Data Summary\n")
 print(summary(test_processed %>% select(v_Vel, v_Acc, Space_Hdwy, Relative_Speed, TTC_current)))
 
 # ------------------------------------------------------------------------------
@@ -238,12 +226,10 @@ model_full <- glm(
   family = binomial(link = "logit")
 )
 
-cat("\n=== MODEL SUMMARY ===\n")
+cat("\nModel Summary\n")
 print(summary(model_full))
 
-# ------------------------------------------------------------------------------
 # 7. Model Evaluation
-# ------------------------------------------------------------------------------
 # Generate predictions
 prob_full <- predict(model_full, newdata = test_processed, type = "response")
 pred_full <- if_else(prob_full > 0.5, 1, 0)
@@ -259,14 +245,13 @@ cm_full <- confusionMatrix(
 roc_full <- roc(test_processed$is_high_risk, prob_full, levels = c(0, 1), direction = "<")
 auc_full <- auc(roc_full)
 
-cat("\n=== MODEL PERFORMANCE METRICS ===\n")
+cat("\nModel Performance Metrics\n")
 cat(sprintf("Accuracy:  %.4f\n", cm_full$overall["Accuracy"]))
 cat(sprintf("Precision: %.4f\n", cm_full$byClass["Precision"]))
 cat(sprintf("Recall:    %.4f\n", cm_full$byClass["Sensitivity"]))
 cat(sprintf("AUC:       %.4f\n", auc_full))
 
-# Class distribution
-cat("\n=== CLASS DISTRIBUTION ===\n")
+cat("\nClass Distribution\n")
 test_high_risk_pct <- mean(test_processed$is_high_risk) * 100
 cat(sprintf("High Risk: %.2f%%\n", test_high_risk_pct))
 cat(sprintf("Low Risk:  %.2f%%\n", 100 - test_high_risk_pct))
@@ -275,11 +260,8 @@ baseline_acc <- max(test_high_risk_pct, 100 - test_high_risk_pct) / 100
 cat(sprintf("\nBaseline (majority class): %.4f\n", baseline_acc))
 cat(sprintf("Model improvement:         %.4f\n", cm_full$overall["Accuracy"] - baseline_acc))
 
-# ------------------------------------------------------------------------------
 # 8. Prediction Horizon Sensitivity Analysis
-# ------------------------------------------------------------------------------
-cat("\n=== PREDICTION HORIZON SENSITIVITY ===\n")
-cat("Testing Δt = 1, 2, 3 seconds\n\n")
+cat("Testing N*t = 1, 2, 3 seconds\n")
 
 horizons <- c(10, 20, 30)  # 1, 2, 3 seconds at 10 Hz
 horizon_results <- list()
@@ -347,14 +329,11 @@ for (delta_t in horizons) {
 # Display horizon comparison
 horizon_comparison <- do.call(rbind, horizon_results)
 rownames(horizon_comparison) <- NULL
-cat("\n=== PREDICTION HORIZON COMPARISON ===\n")
+cat("\nPrediction Horizon Comparison\n")
 print(horizon_comparison)
 
-# ------------------------------------------------------------------------------
 # 9. TTC Threshold Sensitivity Analysis
-# ------------------------------------------------------------------------------
-cat("\n=== TTC THRESHOLD SENSITIVITY ===\n")
-cat("Testing TTC thresholds: 2.0, 3.0, 4.0 seconds (Δt = 2 sec fixed)\n\n")
+cat("Testing TTC thresholds: 2.0, 3.0, 4.0 seconds (N*t = 2 sec fixed)\n\n")
 
 ttc_thresholds <- c(2.0, 3.0, 4.0)
 threshold_results <- list()
@@ -464,16 +443,13 @@ for (ttc_thresh in ttc_thresholds) {
 threshold_comparison <- do.call(rbind, threshold_results)
 rownames(threshold_comparison) <- NULL
 
-cat("\n=== THRESHOLD COMPARISON TABLE ===\n")
+cat("\nThreshold Comparison Table\n")
 print(threshold_comparison %>% select(TTC_Threshold, Pct_Positive_Test, Accuracy, Precision, Recall, AUC))
 
-cat("\n=== ERROR DISTRIBUTION BY THRESHOLD ===\n")
+cat("\nError Distribution by Threshold\n")
 print(threshold_comparison %>% select(TTC_Threshold, FP, FN, FPR, FNR))
 
-# ------------------------------------------------------------------------------
 # 10. Temporal Aggregation Features
-# ------------------------------------------------------------------------------
-cat("\n=== TEMPORAL AGGREGATION FEATURES ===\n")
 cat("Computing rolling statistics (1 second = 10 frames window)\n\n")
 
 ROLLING_WINDOW <- 10
@@ -543,13 +519,10 @@ rolling_comparison <- data.frame(
   AUC = c(as.numeric(auc_baseline), as.numeric(auc_enhanced))
 )
 
-cat("\n=== BASELINE VS ENHANCED MODEL ===\n")
+cat("\nBaseline vs. Enhanced Model\n")
 print(rolling_comparison)
 
-# ------------------------------------------------------------------------------
 # 11. Vehicle Class Segmentation Analysis
-# ------------------------------------------------------------------------------
-cat("\n=== VEHICLE CLASS SEGMENTATION ===\n")
 cat("Analyzing performance by vehicle class\n\n")
 
 # Use enhanced model predictions
@@ -598,28 +571,20 @@ for (vc in vehicle_classes) {
 class_comparison <- do.call(rbind, class_results)
 rownames(class_comparison) <- NULL
 
-cat("\n=== CONFUSION MATRIX BY VEHICLE CLASS ===\n")
+cat("\nConfusion Matrix by Vehicle Class\n")
 print(class_comparison %>% select(v_Class, n_samples, TP, FP, TN, FN))
 
-cat("\n=== ERROR RATES BY VEHICLE CLASS ===\n")
+cat("\nError Rates by Vehicle Class\n")
 print(class_comparison %>% select(v_Class, FPR, FNR, Precision, Recall))
 
-# ------------------------------------------------------------------------------
 # 12. Summary
-# ------------------------------------------------------------------------------
-cat("\n=== FINAL SUMMARY ===\n")
+cat("\nFinal Summary\n")
 cat("Prediction task: Future high-risk events (TTC < 4 sec in future)\n")
 cat("Label construction eliminates instantaneous TTC-based leakage.\n\n")
 
 cat(sprintf("Total test cases: %d\n", nrow(test_processed)))
-cat(sprintf("\nModel Performance (Δt=2sec, TTC<4sec):\n"))
+cat(sprintf("\nModel Performance (N*t=2sec, TTC<4sec):\n"))
 cat(sprintf("  Accuracy:  %.4f\n", cm_full$overall["Accuracy"]))
 cat(sprintf("  Precision: %.4f\n", cm_full$byClass["Precision"]))
 cat(sprintf("  Recall:    %.4f\n", cm_full$byClass["Sensitivity"]))
 cat(sprintf("  AUC:       %.4f\n", auc_full))
-
-cat("\nKey Findings:\n")
-cat("1. Prediction horizon sensitivity: Performance varies with lookahead time\n")
-cat("2. TTC threshold sensitivity: Class balance and metrics change with threshold\n")
-cat("3. Rolling features: Temporal aggregation improves model performance\n")
-cat("4. Vehicle class differences: Error rates vary by vehicle type\n")
