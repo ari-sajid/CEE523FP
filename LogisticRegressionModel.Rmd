@@ -773,7 +773,15 @@ for (ttc_thresh in ttc_thresholds) {
     ) %>%
     select(v_Vel = v_Vel_Subject, v_Acc = v_Acc_Subject, Space_Hdwy = Space_Hdwy_Subject,
            Relative_Speed, Lane_ID = Lane_ID_Subject, TTC_current, is_high_risk) %>%
-    filter(!is.na(is_high_risk))
+    filter(
+      !is.na(TTC_current),
+      !is.infinite(TTC_current),
+      !is.na(is_high_risk),
+      !is.na(Space_Hdwy),
+      !is.na(Relative_Speed),
+      !is.na(v_Vel),
+      !is.na(v_Acc)
+    )
 
   # Testing labels with new threshold
   test_thresh <- test_features %>%
@@ -786,7 +794,15 @@ for (ttc_thresh in ttc_thresholds) {
     ) %>%
     select(v_Vel = v_Vel_Subject, v_Acc = v_Acc_Subject, Space_Hdwy = Space_Hdwy_Subject,
            Relative_Speed, Lane_ID = Lane_ID_Subject, TTC_current, is_high_risk) %>%
-    filter(!is.na(is_high_risk))
+    filter(
+      !is.na(TTC_current),
+      !is.infinite(TTC_current),
+      !is.na(is_high_risk),
+      !is.na(Space_Hdwy),
+      !is.na(Relative_Speed),
+      !is.na(v_Vel),
+      !is.na(v_Acc)
+    )
 
   # Class balance
   n_pos_train <- sum(train_thresh$is_high_risk)
